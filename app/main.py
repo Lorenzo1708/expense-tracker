@@ -7,6 +7,8 @@ from supabase import Client, create_client
 
 from base_models import Balance, Expense, Profile
 
+st.set_page_config(page_title="Expense Tracker", page_icon=":material/account_balance_wallet:")
+
 
 @st.cache_resource
 def _load_client() -> Client:
