@@ -1,4 +1,3 @@
-import locale
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -7,8 +6,6 @@ from dotenv import load_dotenv
 from supabase import Client, create_client
 
 from base_models import Balance, Expense, Profile
-
-locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 
 
 @st.cache_resource
@@ -55,18 +52,17 @@ if "expenses" not in st.session_state:
 _EXPENSES: list[Expense] = st.session_state["expenses"]
 
 
-@st.dialog("Adicionar despesa")
+@st.dialog("Add expense")
 def _add_expense() -> None:
     with st.form("create-expense"):
-        name = st.text_input(":material/badge: Nome", placeholder="Escreva o nome...")
-        cost = st.number_input(":material/add_card: Custo")
-        # date = st.date_input(":material/date_range: Data", datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=-3.0))), format="DD/MM/YYYY")
-        date = st.datetime_input(":material/date_range: Data", format="DD/MM/YYYY")
+        name = st.text_input(":material/badge: Name", placeholder="Enter the name...")
+        cost = st.number_input(":material/add_card: Cost")
+        date = st.date_input(":material/date_range: Date", datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=-3.0))), format="DD/MM/YYYY")
 
         with st.container(horizontal_alignment="right"):
             if st.form_submit_button(":material/add:"):
                 try:
-                    with st.spinner("Adicionando...", show_time=True):
+                    with st.spinner("Please wait...", show_time=True):
                         _CLIENT.table("expenses").insert({"user_id": _USER_ID, "name": name, "cost": cost, "date": date.strftime("%Y-%m-%d")}).execute()
 
                         st.session_state["amount"] = Balance.model_validate(_CLIENT.table("balances").select("*").eq("user_id", _USER_ID).single().execute().data).amount
@@ -79,18 +75,18 @@ def _add_expense() -> None:
                     st.error(f"Error in _add_expense():\n{exception}")
 
 
-@st.dialog("Editar despesa")
+@st.dialog("Edit expense")
 def _edit_expense(index: int) -> None:
     with st.form("edit-expense"):
         expense = _EXPENSES[index]
-        name = st.text_input(":material/badge: Nome", expense.name)
-        cost = st.number_input(":material/add_card: Custo", value=expense.cost)
-        date = st.date_input(":material/date_range: Data", expense.date, format="DD/MM/YYYY")
+        name = st.text_input(":material/badge: Name", expense.name)
+        cost = st.number_input(":material/add_card: Cost", value=expense.cost)
+        date = st.date_input(":material/date_range: Date", expense.date, format="DD/MM/YYYY")
 
         with st.container(horizontal_alignment="right"):
             if st.form_submit_button(":material/edit:"):
                 try:
-                    with st.spinner("Editando...", show_time=True):
+                    with st.spinner("Please wait...", show_time=True):
                         _CLIENT.table("expenses").update({"name": name, "cost": cost, "date": date.strftime("%Y-%m-%d")}).eq("id", expense.id).execute()
 
                         st.session_state["amount"] = Balance.model_validate(_CLIENT.table("balances").select("*").eq("user_id", _USER_ID).single().execute().data).amount
@@ -103,7 +99,7 @@ def _edit_expense(index: int) -> None:
                     st.error(f"Error in _edit_expense():\n{exception}")
 
 
-@st.dialog("Deletar despesa")
+@st.dialog("Delete expense")
 def _delete_expense(index: int) -> None:
     with st.container(border=True, horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
         expense = _EXPENSES[index]
@@ -116,7 +112,7 @@ def _delete_expense(index: int) -> None:
         with st.container(horizontal_alignment="right"):
             if st.button(":material/delete:", type="primary"):
                 try:
-                    with st.spinner("Deletando...", show_time=True):
+                    with st.spinner("Please wait...", show_time=True):
                         _CLIENT.table("expenses").delete().eq("id", expense.id).execute()
 
                         st.session_state["amount"] = Balance.model_validate(_CLIENT.table("balances").select("*").eq("user_id", _USER_ID).single().execute().data).amount
@@ -129,7 +125,7 @@ def _delete_expense(index: int) -> None:
                     st.error(f"Error in _delete_expense():\n{exception}")
 
 
-st.subheader(f":material/balance: Saldo: :{"red" if _AMOUNT < 0.0 else "green"}[R$ {_AMOUNT:.2f}]", anchor=False, text_alignment="center")
+st.subheader(f":material/balance: Balance: :{"red" if _AMOUNT < 0.0 else "green"}[R$ {_AMOUNT:.2f}]", anchor=False, text_alignment="center")
 st.space()
 
 with st.container(horizontal_alignment="center"):
