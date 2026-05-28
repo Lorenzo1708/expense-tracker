@@ -1,3 +1,4 @@
+import locale
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -6,6 +7,8 @@ from dotenv import load_dotenv
 from supabase import Client, create_client
 
 from base_models import Balance, Expense, Profile
+
+locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 
 
 @st.cache_resource
@@ -45,7 +48,9 @@ if "amount" not in st.session_state:
 _AMOUNT = st.session_state["amount"]
 
 if "expenses" not in st.session_state:
-    st.session_state["expenses"] = [Expense.model_validate(data) for data in _CLIENT.table("expenses").select("*").eq("user_id", _USER_ID).order("date", desc=True).order("created_at").execute().data]
+    datetime_now = datetime.now()
+    days = datetime_now.weekday()
+    st.session_state["expenses"] = [Expense.model_validate(data) for data in _CLIENT.table("expenses").select("*").eq("user_id", _USER_ID).gte("date", (datetime_now - timedelta(days)).date()).lte("date", (datetime_now + timedelta(6.0 - days)).date()).order("date", desc=True).order("created_at").execute().data]
 
 _EXPENSES: list[Expense] = st.session_state["expenses"]
 
@@ -55,15 +60,19 @@ def _add_expense() -> None:
     with st.form("create-expense"):
         name = st.text_input(":material/badge: Nome", placeholder="Escreva o nome...")
         cost = st.number_input(":material/add_card: Custo")
-        date = st.date_input(":material/date_range: Data", datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=-3.0))), format="DD/MM/YYYY")
+        # date = st.date_input(":material/date_range: Data", datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=-3.0))), format="DD/MM/YYYY")
+        date = st.datetime_input(":material/date_range: Data", format="DD/MM/YYYY")
 
         with st.container(horizontal_alignment="right"):
             if st.form_submit_button(":material/add:"):
                 try:
-                    _CLIENT.table("expenses").insert({"user_id": _USER_ID, "name": name, "cost": cost, "date": date.strftime("%Y-%m-%d")}).execute()
+                    with st.spinner("Adicionando...", show_time=True):
+                        _CLIENT.table("expenses").insert({"user_id": _USER_ID, "name": name, "cost": cost, "date": date.strftime("%Y-%m-%d")}).execute()
 
-                    st.session_state["amount"] = Balance.model_validate(_CLIENT.table("balances").select("*").eq("user_id", _USER_ID).single().execute().data).amount
-                    st.session_state["expenses"] = [Expense.model_validate(data) for data in _CLIENT.table("expenses").select("*").eq("user_id", _USER_ID).order("date", desc=True).order("created_at").execute().data]
+                        st.session_state["amount"] = Balance.model_validate(_CLIENT.table("balances").select("*").eq("user_id", _USER_ID).single().execute().data).amount
+                        datetime_now = datetime.now()
+                        days = datetime_now.weekday()
+                        st.session_state["expenses"] = [Expense.model_validate(data) for data in _CLIENT.table("expenses").select("*").eq("user_id", _USER_ID).gte("date", (datetime_now - timedelta(days)).date()).lte("date", (datetime_now + timedelta(6.0 - days)).date()).order("date", desc=True).order("created_at").execute().data]
 
                     st.rerun()
                 except Exception as exception:
@@ -81,32 +90,39 @@ def _edit_expense(index: int) -> None:
         with st.container(horizontal_alignment="right"):
             if st.form_submit_button(":material/edit:"):
                 try:
-                    _CLIENT.table("expenses").update({"name": name, "cost": cost, "date": date.strftime("%Y-%m-%d")}).eq("id", expense.id).execute()
+                    with st.spinner("Editando...", show_time=True):
+                        _CLIENT.table("expenses").update({"name": name, "cost": cost, "date": date.strftime("%Y-%m-%d")}).eq("id", expense.id).execute()
 
-                    st.session_state["amount"] = Balance.model_validate(_CLIENT.table("balances").select("*").eq("user_id", _USER_ID).single().execute().data).amount
-                    st.session_state["expenses"] = [Expense.model_validate(data) for data in _CLIENT.table("expenses").select("*").eq("user_id", _USER_ID).order("date", desc=True).order("created_at").execute().data]
+                        st.session_state["amount"] = Balance.model_validate(_CLIENT.table("balances").select("*").eq("user_id", _USER_ID).single().execute().data).amount
+                        datetime_now = datetime.now()
+                        days = datetime_now.weekday()
+                        st.session_state["expenses"] = [Expense.model_validate(data) for data in _CLIENT.table("expenses").select("*").eq("user_id", _USER_ID).gte("date", (datetime_now - timedelta(days)).date()).lte("date", (datetime_now + timedelta(6.0 - days)).date()).order("date", desc=True).order("created_at").execute().data]
 
                     st.rerun()
                 except Exception as exception:
                     st.error(f"Error in _edit_expense():\n{exception}")
 
+
 @st.dialog("Deletar despesa")
 def _delete_expense(index: int) -> None:
-    with st.container(border=True):
+    with st.container(border=True, horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
         expense = _EXPENSES[index]
 
         with st.container():
             st.write(f":material/badge: {expense.name}")
             st.badge(f"{expense.cost:.2f}", icon=":material/add_card:", color="green")
-            st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%d/%m"), icon=":material/date_range:")
+            st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%a, %d/%m/%y"), icon=":material/date_range:")
 
         with st.container(horizontal_alignment="right"):
-            if st.button(":material/delete:"):
+            if st.button(":material/delete:", type="primary"):
                 try:
-                    _CLIENT.table("expenses").delete().eq("id", expense.id).execute()
+                    with st.spinner("Deletando...", show_time=True):
+                        _CLIENT.table("expenses").delete().eq("id", expense.id).execute()
 
-                    st.session_state["amount"] = Balance.model_validate(_CLIENT.table("balances").select("*").eq("user_id", _USER_ID).single().execute().data).amount
-                    st.session_state["expenses"] = [Expense.model_validate(data) for data in _CLIENT.table("expenses").select("*").eq("user_id", _USER_ID).order("date", desc=True).order("created_at").execute().data]
+                        st.session_state["amount"] = Balance.model_validate(_CLIENT.table("balances").select("*").eq("user_id", _USER_ID).single().execute().data).amount
+                        datetime_now = datetime.now()
+                        days = datetime_now.weekday()
+                        st.session_state["expenses"] = [Expense.model_validate(data) for data in _CLIENT.table("expenses").select("*").eq("user_id", _USER_ID).gte("date", (datetime_now - timedelta(days)).date()).lte("date", (datetime_now + timedelta(6.0 - days)).date()).order("date", desc=True).order("created_at").execute().data]
 
                     st.rerun()
                 except Exception as exception:
@@ -123,17 +139,22 @@ with st.container(horizontal_alignment="center"):
 st.space()
 
 for count, expense in enumerate(_EXPENSES):
-    with st.container(border=True):
-        with st.container(horizontal=True, horizontal_alignment="distribute"):
+    with st.container(border=True, horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
+        with st.container():
             st.write(f":material/badge: {expense.name}")
-
-            with st.container(horizontal=True, horizontal_alignment="right"):
-                st.badge(f"{expense.cost:.2f}", icon=":material/add_card:", color="green")
-                st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%d/%m"), icon=":material/date_range:")
+            st.badge(f"R$ {expense.cost:.2f}", icon=":material/add_card:", color="green")
+            st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%a, %d/%m/%y"), icon=":material/date_range:")
 
         with st.container(horizontal=True, horizontal_alignment="right"):
             if st.button(":material/edit:", f":material/edit:_{count}"):
                 _edit_expense(count)
 
-            if st.button(":material/delete:", f":material/delete:_{count}"):
+            if st.button(":material/delete:", f":material/delete:_{count}", type="primary"):
                 _delete_expense(count)
+
+with st.container(horizontal=True, horizontal_alignment="right", vertical_alignment="top"):
+    if st.button(":material/keyboard_arrow_down:"):
+        pass  # TODO
+
+    if st.button(":material/keyboard_arrow_up:"):
+        pass  # TODO
