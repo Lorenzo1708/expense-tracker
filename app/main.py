@@ -42,6 +42,10 @@ except Exception as exception:
 
 
 _USER_ID = _PROFILE.user_id
+_WEEKLY_BUDGET = _PROFILE.weekly_budget
+_WEEKLY_BUDGET_1ST_QUARTILE = _WEEKLY_BUDGET * 0.25
+_WEEKLY_BUDGET_2ND_QUARTILE = _WEEKLY_BUDGET * 0.5
+_WEEKLY_BUDGET_3RD_QUARTILE = _WEEKLY_BUDGET * 0.75
 
 if "amount" not in st.session_state:
     st.session_state["amount"] = Balance.model_validate(_CLIENT.table("balances").select("*").eq("user_id", _USER_ID).single().execute().data).amount
@@ -53,8 +57,6 @@ if "expenses" not in st.session_state:
     datetime_now = datetime.now()
     days = datetime_now.weekday()
     st.session_state["expenses"] = [Expense.model_validate(data) for data in _CLIENT.table("expenses").select("*").eq("user_id", _USER_ID).gte("date", (datetime_now - timedelta(days + st.session_state["offset"])).date()).lte("date", (datetime_now + timedelta(6.0 - days)).date()).order("date", desc=True).order("created_at").execute().data]
-
-_WEEKLY_BUDGET = _PROFILE.weekly_budget
 
 
 @st.dialog("Add expense")
@@ -108,7 +110,7 @@ def _delete_expense(expense: Expense) -> None:
     with st.container(border=True, horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
         with st.container():
             st.write(f":material/badge: {expense.name}")
-            st.badge(f"{expense.cost:.2f}", icon=":material/add_card:", color="red" if expense.cost > _WEEKLY_BUDGET * 0.75 else "orange" if expense.cost > _WEEKLY_BUDGET * 0.5 else "yellow" if expense.cost > _WEEKLY_BUDGET * 0.25 else "green")
+            st.badge(f"{expense.cost:.2f}", icon=":material/add_card:", color="green" if expense.cost < _WEEKLY_BUDGET_1ST_QUARTILE else "yellow" if expense.cost < _WEEKLY_BUDGET_2ND_QUARTILE else "orange" if expense.cost < _WEEKLY_BUDGET_3RD_QUARTILE else "red")
             st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%a, %d/%m/%y"), icon=":material/date_range:")
 
         with st.container(horizontal_alignment="right"):
@@ -127,7 +129,7 @@ def _delete_expense(expense: Expense) -> None:
                     st.error(f"Error in _delete_expense():\n{exception}")
 
 
-st.subheader(f":material/balance: Balance: :{"green" if st.session_state["amount"] > _WEEKLY_BUDGET * 0.75 else "yellow" if st.session_state["amount"] > _WEEKLY_BUDGET * 0.5 else "orange" if st.session_state["amount"] > _WEEKLY_BUDGET * 0.25 else "red"}[R$ {st.session_state["amount"]:.2f}]", anchor=False, text_alignment="center")
+st.subheader(f":material/balance: Balance: :{"red" if st.session_state["amount"] <= _WEEKLY_BUDGET_1ST_QUARTILE else "orange" if st.session_state["amount"] <= _WEEKLY_BUDGET_2ND_QUARTILE else "yellow" if st.session_state["amount"] <= _WEEKLY_BUDGET_3RD_QUARTILE else "green"}[R$ {st.session_state["amount"]:.2f}]", anchor=False, text_alignment="center")
 st.space()
 
 with st.container(horizontal_alignment="center"):
@@ -140,7 +142,7 @@ for count, expense in enumerate(st.session_state["expenses"]):
     with st.container(border=True, horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
         with st.container():
             st.write(f":material/badge: {expense.name}")
-            st.badge(f"R$ {expense.cost:.2f}", icon=":material/add_card:", color="red" if expense.cost > _WEEKLY_BUDGET * 0.75 else "orange" if expense.cost > _WEEKLY_BUDGET * 0.5 else "yellow" if expense.cost > _WEEKLY_BUDGET * 0.25 else "green")
+            st.badge(f"R$ {expense.cost:.2f}", icon=":material/add_card:", color="green" if expense.cost < _WEEKLY_BUDGET_1ST_QUARTILE else "yellow" if expense.cost < _WEEKLY_BUDGET_2ND_QUARTILE else "orange" if expense.cost < _WEEKLY_BUDGET_3RD_QUARTILE else "red")
             st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%a, %d/%m/%y"), icon=":material/date_range:")
 
         with st.container(horizontal=True, horizontal_alignment="right"):
