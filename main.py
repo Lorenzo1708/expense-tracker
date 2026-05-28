@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -55,7 +55,7 @@ def _add_expense() -> None:
     with st.form("create-expense"):
         name = st.text_input(":material/badge: Nome", placeholder="Escreva o nome...")
         cost = st.number_input(":material/add_card: Custo")
-        date = st.date_input(":material/date_range: Data", format="DD/MM/YYYY")
+        date = st.datetime_input(":material/date_range: Data", datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=-3.0))), format="DD/MM/YYYY")
 
         with st.container(horizontal_alignment="right"):
             if st.form_submit_button(":material/add:"):
