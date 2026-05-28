@@ -1,5 +1,4 @@
-- [ ] Implement the expand-expenses button
-- [ ] Implement the collapse-expenses button
-- [ ] Implement a visual feedback for the balance and expense values
-
+- [X] Implement the expand-expenses button
+- [X] Implement the collapse-expenses button
+- [X] Implement a visual feedback for the balance and expense values
 - [ ] (Future) Update the weekly budget
