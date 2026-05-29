@@ -10,11 +10,7 @@ st.set_page_config(page_title="Expense Tracker", page_icon=":material/account_ba
 
 @st.cache_resource
 def _load_client() -> Client:
-    client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
-
-    client.auth.sign_in_with_password({"email": st.secrets["SUPABASE_EMAIL"], "password": st.secrets["SUPABASE_PASSWORD"]})
-
-    return client
+    return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 
 try:
@@ -26,8 +22,24 @@ except Exception as exception:
 
 
 @st.cache_resource
+def _load_user_id() -> str:
+    if not (user := _CLIENT.auth.sign_in_with_password({"email": st.secrets["SUPABASE_EMAIL"], "password": st.secrets["SUPABASE_PASSWORD"]}).user):
+        raise ValueError("user is None")
+
+    return user.id
+
+
+try:
+    _USER_ID = _load_user_id()
+except Exception as exception:
+    st.error(f"Error in _load_user_id():\n{exception}")
+
+    st.stop()
+
+
+@st.cache_resource
 def _load_profile() -> Profile:
-    return Profile.model_validate(_CLIENT.table("profiles").select("*").eq("name", "Lorenzo").single().execute().data)
+    return Profile.model_validate(_CLIENT.table("profiles").select("*").eq("user_id", _USER_ID).single().execute().data)
 
 
 try:
@@ -38,7 +50,6 @@ except Exception as exception:
     st.stop()
 
 
-_USER_ID = _PROFILE.user_id
 _WEEKLY_BUDGET = _PROFILE.weekly_budget
 _WEEKLY_BUDGET_1ST_QUARTILE = _WEEKLY_BUDGET * 0.25
 _WEEKLY_BUDGET_2ND_QUARTILE = _WEEKLY_BUDGET * 0.5
