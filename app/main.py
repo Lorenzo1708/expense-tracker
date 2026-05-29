@@ -67,7 +67,7 @@ def _add_expense() -> None:
         date = st.date_input(":material/date_range: Date", datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=-3.0))), format="DD/MM/YYYY")
 
         with st.container(horizontal_alignment="right"):
-            if st.form_submit_button(":material/add:"):
+            if st.form_submit_button(":material/add_circle:"):
                 try:
                     with st.spinner("Please wait...", show_time=True):
                         _CLIENT.table("expenses").insert({"user_id": _USER_ID, "name": name, "cost": cost, "date": date.strftime("%Y-%m-%d")}).execute()
@@ -109,9 +109,9 @@ def _edit_expense(expense: Expense) -> None:
 def _delete_expense(expense: Expense) -> None:
     with st.container(border=True, horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
         with st.container():
-            st.write(f":material/badge: {expense.name}")
-            st.badge(f"{expense.cost:.2f}", icon=":material/add_card:", color="green" if expense.cost < _WEEKLY_BUDGET_1ST_QUARTILE else "yellow" if expense.cost < _WEEKLY_BUDGET_2ND_QUARTILE else "orange" if expense.cost < _WEEKLY_BUDGET_3RD_QUARTILE else "red")
-            st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%a, %d/%m/%y"), icon=":material/date_range:")
+            st.badge(expense.name, icon=":material/badge:", color="blue")
+            st.badge(f"R$ {expense.cost:.2f}", icon=":material/add_card:", color="gray" if expense.cost < 0.0 else "green" if expense.cost < _WEEKLY_BUDGET_1ST_QUARTILE else "yellow" if expense.cost < _WEEKLY_BUDGET_2ND_QUARTILE else "orange" if expense.cost < _WEEKLY_BUDGET_3RD_QUARTILE else "red")
+            st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%a, %d/%m/%y"), icon=":material/date_range:", color="violet")
 
         with st.container(horizontal_alignment="right"):
             if st.button(":material/delete:", type="primary"):
@@ -133,7 +133,7 @@ st.subheader(f":material/balance: Balance: :{"red" if st.session_state["amount"]
 st.space()
 
 with st.container(horizontal_alignment="center"):
-    if st.button(":material/add:"):
+    if st.button(":material/add_circle:"):
         _add_expense()
 
 st.space()
@@ -141,9 +141,9 @@ st.space()
 for count, expense in enumerate(st.session_state["expenses"]):
     with st.container(border=True, horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
         with st.container():
-            st.write(f":material/badge: {expense.name}")
-            st.badge(f"R$ {expense.cost:.2f}", icon=":material/add_card:", color="green" if expense.cost < _WEEKLY_BUDGET_1ST_QUARTILE else "yellow" if expense.cost < _WEEKLY_BUDGET_2ND_QUARTILE else "orange" if expense.cost < _WEEKLY_BUDGET_3RD_QUARTILE else "red")
-            st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%a, %d/%m/%y"), icon=":material/date_range:")
+            st.badge(expense.name, icon=":material/badge:", color="blue")
+            st.badge(f"R$ {expense.cost:.2f}", icon=":material/add_card:", color="gray" if expense.cost < 0.0 else "green" if expense.cost < _WEEKLY_BUDGET_1ST_QUARTILE else "yellow" if expense.cost < _WEEKLY_BUDGET_2ND_QUARTILE else "orange" if expense.cost < _WEEKLY_BUDGET_3RD_QUARTILE else "red")
+            st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%a, %d/%m/%y"), icon=":material/date_range:", color="violet")
 
         with st.container(horizontal=True, horizontal_alignment="right"):
             if st.button(":material/edit:", f":material/edit:_{count}"):
@@ -153,7 +153,7 @@ for count, expense in enumerate(st.session_state["expenses"]):
                 _delete_expense(expense)
 
 with st.container(horizontal=True, horizontal_alignment="right", vertical_alignment="top"):
-    if st.button(":material/keyboard_arrow_down:"):
+    if st.button(":material/arrow_circle_down:"):
         datetime_now = datetime.now()
         days = datetime_now.weekday()
         st.session_state["offset"] += 7.0
@@ -161,7 +161,7 @@ with st.container(horizontal=True, horizontal_alignment="right", vertical_alignm
 
         st.rerun()
 
-    if st.button(":material/keyboard_arrow_up:", disabled=st.session_state["offset"] <= 0.0):
+    if st.button(":material/arrow_circle_up:", disabled=st.session_state["offset"] <= 0.0):
         datetime_now = datetime.now()
         days = datetime_now.weekday()
         st.session_state["offset"] -= 7.0
