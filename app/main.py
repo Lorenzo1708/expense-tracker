@@ -1,8 +1,6 @@
-import os
 from datetime import datetime, timedelta, timezone
 
 import streamlit as st
-from dotenv import load_dotenv
 from supabase import Client, create_client
 
 from base_models import Balance, Expense, Profile
@@ -12,12 +10,7 @@ st.set_page_config(page_title="Expense Tracker", page_icon=":material/account_ba
 
 @st.cache_resource
 def _load_client() -> Client:
-    load_dotenv()
-
-    if not ((supabase_url := os.getenv("SUPABASE_URL")) and (supabase_key := os.getenv("SUPABASE_KEY"))):
-        raise ValueError("Missing one or more of these environment variables:\n- SUPABASE_URL\n- SUPABASE_KEY")
-
-    return create_client(supabase_url, supabase_key)
+    return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 
 try:
