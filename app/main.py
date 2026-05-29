@@ -10,7 +10,11 @@ st.set_page_config(page_title="Expense Tracker", page_icon=":material/account_ba
 
 @st.cache_resource
 def _load_client() -> Client:
-    return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+    client = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+
+    client.auth.sign_in_with_password({"email": st.secrets["SUPABASE_EMAIL"], "password": st.secrets["SUPABASE_PASSWORD"]})
+
+    return client
 
 
 try:
