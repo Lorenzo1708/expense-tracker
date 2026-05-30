@@ -117,7 +117,7 @@ def _edit_expense(expense: Expense) -> None:
 def _delete_expense(expense: Expense) -> None:
     with st.container(border=True, horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
         with st.container():
-            st.badge(expense.name, icon=":material/badge:", color="blue")
+            st.badge(expense.name, icon=":material/badge:")
             st.badge(f"R$ {expense.cost:.2f}", icon=":material/add_card:", color="gray" if expense.cost < 0.0 else "green" if expense.cost < _WEEKLY_BUDGET_1ST_QUARTILE else "yellow" if expense.cost < _WEEKLY_BUDGET_2ND_QUARTILE else "orange" if expense.cost < _WEEKLY_BUDGET_3RD_QUARTILE else "red")
             st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%a, %d/%m/%y"), icon=":material/date_range:", color="violet")
 
@@ -147,9 +147,11 @@ with st.container(horizontal_alignment="center"):
 st.space()
 
 for count, expense in enumerate(st.session_state["expenses"]):
+    expense: Expense
+
     with st.container(border=True, horizontal=True, horizontal_alignment="distribute", vertical_alignment="bottom"):
         with st.container():
-            st.badge(expense.name, icon=":material/badge:", color="blue")
+            st.badge(expense.name, icon=":material/badge:")
             st.badge(f"R$ {expense.cost:.2f}", icon=":material/add_card:", color="gray" if expense.cost < 0.0 else "green" if expense.cost < _WEEKLY_BUDGET_1ST_QUARTILE else "yellow" if expense.cost < _WEEKLY_BUDGET_2ND_QUARTILE else "orange" if expense.cost < _WEEKLY_BUDGET_3RD_QUARTILE else "red")
             st.badge(datetime.strptime(expense.date, "%Y-%m-%d").strftime("%a, %d/%m/%y"), icon=":material/date_range:", color="violet")
 
