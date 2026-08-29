@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 import streamlit as st
 from supabase import Client, create_client
 
-from base_models import Balance, Expense, Profile
+from base_models import Profile, Balance, Expense
 
 st.set_page_config(page_title="Expense Tracker", page_icon=":material/account_balance_wallet:")
 
@@ -23,7 +23,7 @@ except Exception as exception:
 
 @st.cache_resource
 def _load_user_id() -> str:
-    if not (user := _CLIENT.auth.sign_in_with_password({"email": st.secrets["SUPABASE_EMAIL"], "password": st.secrets["SUPABASE_PASSWORD"]}).user):
+    if (user := _CLIENT.auth.sign_in_with_password({"email": st.secrets["SUPABASE_EMAIL"], "password": st.secrets["SUPABASE_PASSWORD"]}).user) is None:
         raise ValueError("user is None")
 
     return user.id
